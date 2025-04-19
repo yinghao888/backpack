@@ -1,0 +1,19 @@
+import requests
+
+# 获取所有市场信息
+markets_url = "https://api.backpack.exchange/api/v1/markets"
+response = requests.get(markets_url)
+markets_data = response.json()
+
+# 筛选合约市场
+perp_markets = [market["symbol"] for market in markets_data if market["marketType"] == "PERP"]
+
+# 为每个合约市场获取行情
+for symbol in perp_markets:
+    ticker_url = f"https://api.backpack.exchange/api/v1/ticker?symbol={symbol}"
+    response = requests.get(ticker_url)
+    if response.status_code == 200:
+        ticker_data = response.json()
+        print(f"{symbol} 的最新价格: {ticker_data['lastPrice']}")
+    else:
+        print(f"获取 {symbol} 的行情失败，状态码: {response.status_code}")
