@@ -1,54 +1,53 @@
 #!/bin/bash
 
-# 中文字符设置
-export LANG=zh_CN.UTF-8
+# 设置工作目录
+WORK_DIR="$HOME/backpack_bot"
+CONFIG_FILE="$WORK_DIR/config.json"
 
-# 颜色定义
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-NC='\033[0m'
+# 清理旧环境
+echo "🔄 清理旧环境..."
+rm -rf "$WORK_DIR/venv"
+pm2 delete backpack_bot >/dev/null 2>&1
 
 # 创建工作目录
-WORK_DIR="$HOME/backpack_bot"
+echo "📁 创建工作目录: $WORK_DIR"
 mkdir -p "$WORK_DIR"
 cd "$WORK_DIR" || exit
 
-echo -e "${GREEN}🌟 Backpack全自动交易机器人安装程序${NC}"
-
 # 安装系统依赖
-echo -e "${YELLOW}🔧 正在安装系统依赖...${NC}"
+echo "🔧 安装系统依赖..."
 sudo apt-get update
 sudo apt-get install -y python3 python3-pip nodejs npm git jq python3-venv
 
-# 创建并激活虚拟环境
-echo -e "${YELLOW}🐍 创建Python虚拟环境...${NC}"
+# 创建虚拟环境
+echo "🐍 创建Python虚拟环境..."
 python3 -m venv venv
-source venv/bin/activate
-
-# 安装PM2（使用系统全局安装）
-echo -e "${YELLOW}⏳ 正在安装PM2...${NC}"
-sudo npm install pm2 -g
 
 # 下载必要文件
-echo -e "${YELLOW}📦 正在下载脚本文件...${NC}"
+echo "📥 下载脚本文件..."
 files=("bot.py" "menu.py" "requirements.txt" "strategies.py")
 for file in "${files[@]}"; do
-    if ! curl -sO "https://raw.githubusercontent.com/yinghao888/backpack/main/$file"; then
-        echo -e "${RED}❌ 文件下载失败: $file${NC}"
+    if ! curl -sLO "https://raw.githubusercontent.com/yinghao888/backpack/main/$file"; then
+        echo "❌ 文件下载失败: $file"
         exit 1
     fi
 done
 
-# 安装Python依赖（在虚拟环境中）
-echo -e "${YELLOW}🐍 正在安装Python依赖...${NC}"
-pip install --upgrade pip
-pip install -r requirements.txt
+# 安装Python依赖
+echo "📦 安装Python依赖..."
+source venv/bin/activate
+pip install --upgrade pip >/dev/null
+pip install -r requirements.txt > pip_install.log 2>&1
 
-# 初始化配置文件
-if [ ! -f "config.json" ]; then
-    echo -e "${YELLOW}⚙️ 正在创建配置文件...${NC}"
-    cat > config.json <<EOL
+if [ $? -ne 0 ]; then
+    echo "❌ Python依赖安装失败，请检查pip_install.log"
+    exit 1
+fi
+
+# 初始化配置
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "⚙️ 创建默认配置文件..."
+    cat > "$CONFIG_FILE" <<EOL
 {
     "tg_chat_id": "",
     "api_key": "",
@@ -64,11 +63,12 @@ if [ ! -f "config.json" ]; then
 EOL
 fi
 
-# 修复权限问题
-echo -e "${YELLOW}🔒 修复文件权限...${NC}"
-chmod -R 755 "$WORK_DIR"
+# 修复权限
+echo "🔒 设置文件权限..."
+chmod 755 "$WORK_DIR" -R
 sudo chown -R $(whoami):$(whoami) "$WORK_DIR"
 
-# 启动菜单系统
-echo -e "${GREEN}✅ 安装完成！启动控制菜单...${NC}"
-source venv/bin/activate && python menu.py
+# 启动菜单
+echo "✅ 安装完成！启动控制菜单..."
+source venv/bin/activate
+python menu.py
