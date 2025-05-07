@@ -1,0 +1,5 @@
+ccxt==4.2.85
+python-telegram-bot==20.5
+requests==2.31.0
+python-dotenv==1.0.0
+jq==1.6
