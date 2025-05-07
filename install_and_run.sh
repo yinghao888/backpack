@@ -7,7 +7,7 @@ export LANG=zh_CN.UTF-8
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 # 创建工作目录
 WORK_DIR="$HOME/backpack_bot"
@@ -27,9 +27,10 @@ sudo npm install pm2 -g
 
 # 下载必要文件
 echo -e "${YELLOW}📦 正在下载脚本文件...${NC}"
-curl -sO https://raw.githubusercontent.com/yinghao888/backpack/main/bot.py
-curl -sO https://raw.githubusercontent.com/yinghao888/backpack/main/menu.py
-curl -sO https://raw.githubusercontent.com/yinghao888/backpack/main/requirements.txt
+files=("bot.py" "menu.py" "requirements.txt" "strategies.py")
+for file in "${files[@]}"; do
+    curl -sO "https://raw.githubusercontent.com/yinghao888/backpack/main/$file"
+done
 
 # 安装Python依赖
 echo -e "${YELLOW}🐍 正在安装Python依赖...${NC}"
@@ -42,7 +43,14 @@ if [ ! -f "config.json" ]; then
 {
     "tg_chat_id": "",
     "api_key": "",
-    "api_secret": ""
+    "api_secret": "",
+    "strategy": "contract",
+    "grid_params": {
+        "grid_num": 5,
+        "upper_price": 3000,
+        "lower_price": 2500,
+        "grid_type": "long"
+    }
 }
 EOL
 fi
